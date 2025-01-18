@@ -14,6 +14,8 @@ spring:
           lower-case-service-id: true
 
 management:
+  server:
+    port: 8081
   info:
     java:
       enabled: true
@@ -32,6 +34,9 @@ management:
       enabled: true
 
 eureka:
+  instance:
+    metadata-map:
+      management.port: ${management.server.port}
   client:
     service-url:
       defaultZone: ${SERVICE_URL:http://localhost/eureka}
