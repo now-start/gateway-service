@@ -1,3 +1,7 @@
+server:
+  port: 8080
+  forward-headers-strategy: framework
+
 spring:
   application:
     name: gateway
@@ -8,21 +12,13 @@ spring:
           enabled: true
           lower-case-service-id: true
 
-eureka:
-  client:
-    service-url:
-      defaultZone: ${eureka_servers:http://localhost:8761/eureka}
-
-server:
-  port: 8000
-
 management:
   server:
-    port: 8001
+    port: 8081
   info:
-    os:
-      enabled: true
     java:
+      enabled: true
+    os:
       enabled: true
     process:
       enabled: true
@@ -35,9 +31,14 @@ management:
       show-details: always
     gateway:
       enabled: true
-    circuitbreakers:
-      enabled: true
+
+eureka:
+  instance:
+    metadata-map:
+      actual-port: ${management.server.port}
+  client:
+    eureka-server-u-r-l-context: ${DISCOVERY_URL:localhost}
 
 logging:
   file:
-    path: build/log
+    path: ./log
