@@ -3,26 +3,17 @@ server:
   shutdown: graceful
   forward-headers-strategy: framework
 
-spring:
-  application:
-    name: gateway
-  cloud:
-    gateway:
-      discovery:
-        locator:
-          enabled: true
-          lower-case-service-id: true
+eureka:
+  instance:
+    metadata-map:
+      management.port: ${management.server.port}
+  client:
+    service-url:
+      defaultZone: ${SERVICE_URL:https://spring.nowstart.org/admin/eureka/}
 
 management:
   server:
     port: 8081
-  info:
-    java:
-      enabled: true
-    os:
-      enabled: true
-    process:
-      enabled: true
   endpoints:
     web:
       exposure:
@@ -30,17 +21,16 @@ management:
   endpoint:
     health:
       show-details: always
-    gateway:
+  info:
+    os:
       enabled: true
-
-eureka:
-  instance:
-    metadata-map:
-      management.port: ${management.server.port}
-  client:
-    service-url:
-      defaultZone: ${SERVICE_URL:http://localhost/eureka}
+    java:
+      enabled: true
+    process:
+      enabled: true
 
 logging:
   file:
-    path: ./log
+    path: ./logs
+  charset:
+    file: UTF-8
