@@ -1,4 +1,4 @@
-package org.nowstart.gatewayservice;
+package org.nowstart.gateway;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.actuate.web.exchanges.HttpExchangeRepository;
@@ -6,7 +6,6 @@ import org.springframework.boot.actuate.web.exchanges.InMemoryHttpExchangeReposi
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.context.annotation.Bean;
-import org.springframework.web.service.annotation.HttpExchange;
 
 @EnableDiscoveryClient
 @SpringBootApplication
