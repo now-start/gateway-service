@@ -1,6 +1,8 @@
 package org.nowstart.gateway;
 
 import org.springframework.boot.SpringApplication;
+import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.boot.actuate.audit.InMemoryAuditEventRepository;
 import org.springframework.boot.actuate.web.exchanges.HttpExchangeRepository;
 import org.springframework.boot.actuate.web.exchanges.InMemoryHttpExchangeRepository;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -18,5 +20,10 @@ public class GatewayServiceApplication {
     @Bean
     public HttpExchangeRepository createTraceRepository() {
         return new InMemoryHttpExchangeRepository();
+    }
+
+    @Bean
+    public AuditEventRepository createAuditEventRepository() {
+        return new InMemoryAuditEventRepository();
     }
 }
