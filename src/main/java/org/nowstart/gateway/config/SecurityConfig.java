@@ -34,14 +34,16 @@ public class SecurityConfig {
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchanges -> exchanges
-                        .pathMatchers("/admin/**").permitAll()
-                        .pathMatchers("/nyang-nyang-bot/authorization/**").permitAll()
+                        .pathMatchers("/*/actuator/**").hasRole(Role.ADMIN.name())
 
                         .pathMatchers("/admin/applications/*/actuator/**").hasRole(Role.ADMIN.name())
                         .pathMatchers("/admin/instances/**").hasRole(Role.ADMIN.name())
-                        .pathMatchers("/*/actuator/**").hasRole(Role.ADMIN.name())
+                        .pathMatchers("/admin/**").permitAll()
+
                         .pathMatchers("/config/**").hasRole(Role.ADMIN.name())
                         .pathMatchers("/eureka/**").hasRole(Role.ADMIN.name())
+
+                        .pathMatchers("/nyang-nyang-bot/authorization/**").permitAll()
 
                         .anyExchange().authenticated()
                 )
