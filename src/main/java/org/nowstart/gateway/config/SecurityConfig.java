@@ -49,6 +49,7 @@ public class SecurityConfig {
                         .anyExchange().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2
+                        .bearerTokenConverter(new CookieJwtServerAuthenticationConverter())
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
                 ).build();
     }
