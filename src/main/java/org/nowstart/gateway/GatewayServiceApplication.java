@@ -21,9 +21,4 @@ public class GatewayServiceApplication {
     public HttpExchangeRepository createTraceRepository() {
         return new InMemoryHttpExchangeRepository();
     }
-
-    @Bean
-    public AuditEventRepository createAuditEventRepository() {
-        return new InMemoryAuditEventRepository();
-    }
 }
