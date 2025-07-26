@@ -1,69 +1,45 @@
 package org.nowstart.gateway.config;
 
-import javax.crypto.spec.SecretKeySpec;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang.StringUtils;
 import org.nowstart.gateway.data.Role;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.convert.converter.Converter;
-import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
+import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder;
-import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
-import org.springframework.security.oauth2.server.resource.authentication.ReactiveJwtAuthenticationConverterAdapter;
 import org.springframework.security.web.server.SecurityWebFilterChain;
-import reactor.core.publisher.Mono;
+import org.springframework.web.server.WebFilter;
 
 @Configuration
 @EnableWebFluxSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    @Value("${encrypt.key}")
-    private String secretKey;
-    private static final int SECRET_KEY_MIN_LENGTH = 32;
-
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         return http
-                .csrf(ServerHttpSecurity.CsrfSpec::disable)
-                .authorizeExchange(exchanges -> exchanges
-                        .pathMatchers("/admin/applications/*/actuator/**").hasRole(Role.ADMIN.name())
-                        .pathMatchers("/admin/instances/**").hasRole(Role.ADMIN.name())
+            .csrf(ServerHttpSecurity.CsrfSpec::disable)
+            .addFilterAfter(customAuthoritiesFilter(), SecurityWebFiltersOrder.AUTHENTICATION)
+            .authorizeExchange(exchanges -> exchanges
+                .pathMatchers("/admin/applications/*/actuator/**").hasRole(Role.ADMINISTRATORS.name())
+                .pathMatchers("/admin/instances/**").hasRole(Role.ADMINISTRATORS.name())
+                .pathMatchers("/config/**").hasRole(Role.ADMINISTRATORS.name())
+                .pathMatchers("/eureka/**").hasRole(Role.ADMINISTRATORS.name())
+                .pathMatchers("/*/actuator/**").hasRole(Role.ADMINISTRATORS.name())
 
-                        .pathMatchers("/config/**").hasRole(Role.ADMIN.name())
-                        .pathMatchers("/eureka/**").hasRole(Role.ADMIN.name())
+                .pathMatchers("/nyang-nyang-bot/authorization/**").permitAll()
+                .pathMatchers("/actuator/**").permitAll()
 
-                        .pathMatchers("/*/actuator/**").hasRole(Role.ADMIN.name())
-
-                        .pathMatchers("/nyang-nyang-bot/authorization/**").permitAll()
-                        .pathMatchers("/actuator/**").permitAll()
-                        .pathMatchers("/admin/**").permitAll()
-
-                        .anyExchange().authenticated()
-                )
-                .oauth2ResourceServer(oauth2 -> oauth2
-                        .bearerTokenConverter(new CookieJwtServerAuthenticationConverter())
-                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
-                ).build();
+                .anyExchange().authenticated()
+            )
+            .oauth2Login(Customizer.withDefaults())
+            .oauth2Client(Customizer.withDefaults())
+            .build();
     }
 
     @Bean
-    public ReactiveJwtDecoder reactiveJwtDecoder() {
-        return NimbusReactiveJwtDecoder.withSecretKey(new SecretKeySpec(StringUtils.leftPad(secretKey, SECRET_KEY_MIN_LENGTH, '0').getBytes(), "HmacSHA256")).build();
-    }
-
-    @Bean
-    public Converter<Jwt, Mono<AbstractAuthenticationToken>> jwtAuthenticationConverter() {
-        return new ReactiveJwtAuthenticationConverterAdapter(jwt -> new JwtAuthenticationToken(jwt,
-                jwt.getClaimAsStringList("roles").stream()
-                        .map(role -> new SimpleGrantedAuthority(Role.valueOf(role).authority()))
-                        .toList()));
+    public WebFilter customAuthoritiesFilter() {
+        return new CustomAuthoritiesFilter();
     }
 }
