@@ -24,6 +24,7 @@ public class SecurityConfig {
     private final CustomAuthoritiesFilter customAuthoritiesFilter;
 
     @Bean
+    @RefreshScope
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         return http
             .csrf(ServerHttpSecurity.CsrfSpec::disable)
