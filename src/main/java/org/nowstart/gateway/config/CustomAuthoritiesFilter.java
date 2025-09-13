@@ -14,16 +14,17 @@ import org.springframework.security.oauth2.client.authentication.OAuth2Authentic
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
 
 @Slf4j
+@Component
 public class CustomAuthoritiesFilter implements WebFilter {
 
     private static final String GROUPS_ATTRIBUTE = "groups";
-    private static final String ROLE_PREFIX = "ROLE_";
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
@@ -66,7 +67,7 @@ public class CustomAuthoritiesFilter implements WebFilter {
             .map(String::toUpperCase)
             .map(CustomAuthoritiesFilter::apply)
             .filter(Objects::nonNull)
-            .map(role -> new SimpleGrantedAuthority(ROLE_PREFIX + role.name()))
+            .map(role -> new SimpleGrantedAuthority(role.name()))
             .collect(Collectors.collectingAndThen(
                 Collectors.toCollection(() -> new java.util.ArrayList<>(existingAuthorities)),
                 List::copyOf
