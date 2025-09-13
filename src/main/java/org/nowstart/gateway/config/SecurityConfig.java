@@ -39,9 +39,10 @@ public class SecurityConfig {
             if (CollectionUtils.isEmpty(rule.getRoles())) {
                 exchanges.pathMatchers(rule.getPath()).permitAll();
             } else {
-                for (Role role : rule.getRoles()) {
-                    exchanges.pathMatchers(rule.getPath()).hasAuthority(role.name());
-                }
+                String[] authorities = rule.getRoles().stream()
+                    .map(Role::name)
+                    .toArray(String[]::new);
+                exchanges.pathMatchers(rule.getPath()).hasAnyAuthority(authorities);
             }
         }
 
