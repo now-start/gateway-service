@@ -1,17 +1,12 @@
 package org.nowstart.gateway.data;
 
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.cloud.context.config.annotation.RefreshScope;
-import org.springframework.stereotype.Component;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Data
-@Component
-@RefreshScope
 @ConfigurationProperties(prefix = "security")
 public class AuthorizeExchangeProperties {
 

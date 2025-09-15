@@ -14,7 +14,6 @@ import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.util.CollectionUtils;
 
-@RefreshScope
 @Configuration
 @EnableWebFluxSecurity
 @RequiredArgsConstructor
