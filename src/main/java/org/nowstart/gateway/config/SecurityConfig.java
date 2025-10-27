@@ -26,12 +26,16 @@ public class SecurityConfig {
     @RefreshScope
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         return http
-            .csrf(ServerHttpSecurity.CsrfSpec::disable)
-            .addFilterAfter(customAuthoritiesFilter, SecurityWebFiltersOrder.AUTHENTICATION)
-            .authorizeExchange(this::configureAuthorization)
-            .oauth2Login(Customizer.withDefaults())
-            .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
-            .build();
+                .csrf(ServerHttpSecurity.CsrfSpec::disable)
+                .addFilterAfter(customAuthoritiesFilter, SecurityWebFiltersOrder.AUTHENTICATION)
+                .headers(headers -> headers
+                        .frameOptions(ServerHttpSecurity.HeaderSpec.FrameOptionsSpec::disable)
+                        .contentSecurityPolicy(csp -> csp.policyDirectives("frame-ancestors 'self'"))
+                )
+                .authorizeExchange(this::configureAuthorization)
+                .oauth2Login(Customizer.withDefaults())
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
+                .build();
     }
 
     private void configureAuthorization(ServerHttpSecurity.AuthorizeExchangeSpec exchanges) {
@@ -40,8 +44,8 @@ public class SecurityConfig {
                 exchanges.pathMatchers(rule.getPath()).permitAll();
             } else {
                 String[] authorities = rule.getRoles().stream()
-                    .map(Role::name)
-                    .toArray(String[]::new);
+                        .map(Role::name)
+                        .toArray(String[]::new);
                 exchanges.pathMatchers(rule.getPath()).hasAnyAuthority(authorities);
             }
         }
