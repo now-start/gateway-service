@@ -50,7 +50,7 @@ public class SecurityConfig {
             }
         }
 
-        exchanges.anyExchange().denyAll();
+        exchanges.anyExchange().authenticated();
     }
 
 }
