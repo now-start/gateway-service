@@ -1,6 +1,8 @@
 package org.nowstart.gateway.config;
 
 
+import java.util.Comparator;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.nowstart.gateway.data.AuthorizeExchangeProperties;
 import org.nowstart.gateway.data.Role;
@@ -39,7 +41,11 @@ public class SecurityConfig {
     }
 
     private void configureAuthorization(ServerHttpSecurity.AuthorizeExchangeSpec exchanges) {
-        for (AuthorizeExchangeProperties.PathRule rule : authorizeProperties.getRules()) {
+        List<AuthorizeExchangeProperties.PathRule> sortedRules = authorizeProperties.getRules().stream()
+                .sorted(Comparator.comparingInt((AuthorizeExchangeProperties.PathRule r) -> r.getPath().length()).reversed())
+                .toList();
+
+        for (AuthorizeExchangeProperties.PathRule rule : sortedRules) {
             if (CollectionUtils.isEmpty(rule.getRoles())) {
                 exchanges.pathMatchers(rule.getPath()).permitAll();
             } else {
