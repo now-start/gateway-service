@@ -12,6 +12,24 @@ spring:
       enabled: false
     bus:
       enabled: false
+  security:
+    oauth2:
+      client:
+        registration:
+          test:
+            client-id: "test-id"
+            client-secret: "test-secret"
+            authorization-grant-type: "authorization_code"
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+        provider:
+          test:
+            authorization-uri: "http://localhost:9999/oauth/authorize"
+            token-uri: "http://localhost:9999/oauth/token"
+            jwk-set-uri: "http://localhost:9999/oauth/jwks"
+      resourceserver:
+        jwt:
+          jwk-set-uri: "http://localhost:9999/oauth/jwks"
+
 eureka:
   client:
     enabled: false
