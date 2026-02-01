@@ -1,8 +1,28 @@
 package org.nowstart.gateway.data;
 
-import lombok.Getter;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Stream;
 
-@Getter
 public enum Role {
-    ADMINISTRATORS, PERSONAL, GUEST;
+    GUEST,
+    PERSONAL(GUEST),
+    ADMINISTRATORS(PERSONAL, GUEST);
+
+    private final List<Role> includes;
+
+    Role(Role... includes) {
+        this.includes = Arrays.asList(includes);
+    }
+
+    private static Stream<Role> apply(Role r) {
+        return r.getAllIncluded().stream();
+    }
+
+    public List<Role> getAllIncluded() {
+        return Stream.concat(
+                Stream.of(this),
+                includes.stream().flatMap(Role::apply)
+        ).distinct().toList();
+    }
 }

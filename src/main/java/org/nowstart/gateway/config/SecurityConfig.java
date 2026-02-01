@@ -14,18 +14,20 @@ import org.springframework.security.config.annotation.web.reactive.EnableWebFlux
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.util.CollectionUtils;
 
 @Configuration
+@RefreshScope
 @EnableWebFluxSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
     private final AuthorizeExchangeProperties authorizeProperties;
     private final CustomAuthoritiesFilter customAuthoritiesFilter;
+    private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
     @Bean
-    @RefreshScope
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
@@ -42,17 +44,17 @@ public class SecurityConfig {
 
     private void configureAuthorization(ServerHttpSecurity.AuthorizeExchangeSpec exchanges) {
         List<AuthorizeExchangeProperties.PathRule> sortedRules = authorizeProperties.getRules().stream()
-                .sorted(Comparator.comparingInt((AuthorizeExchangeProperties.PathRule r) -> r.getPath().length()).reversed())
+                .sorted((r1, r2) -> pathMatcher.getPatternComparator(r1.path()).compare(r1.path(), r2.path()))
                 .toList();
 
         for (AuthorizeExchangeProperties.PathRule rule : sortedRules) {
-            if (CollectionUtils.isEmpty(rule.getRoles())) {
-                exchanges.pathMatchers(rule.getPath()).permitAll();
+            if (CollectionUtils.isEmpty(rule.roles())) {
+                exchanges.pathMatchers(rule.path()).permitAll();
             } else {
-                String[] authorities = rule.getRoles().stream()
+                String[] authorities = rule.roles().stream()
                         .map(Role::name)
                         .toArray(String[]::new);
-                exchanges.pathMatchers(rule.getPath()).hasAnyAuthority(authorities);
+                exchanges.pathMatchers(rule.path()).hasAnyAuthority(authorities);
             }
         }
 

@@ -1,0 +1,23 @@
+spring:
+  cloud:
+    discovery:
+      enabled: false
+    gateway:
+      server:
+        webflux:
+          discovery:
+            locator:
+              enabled: false
+    config:
+      enabled: false
+    bus:
+      enabled: false
+eureka:
+  client:
+    enabled: false
+
+security:
+  administrators:
+    - "/config/**"
+  publicPaths:
+    - "/config/actuator/busrefresh"
