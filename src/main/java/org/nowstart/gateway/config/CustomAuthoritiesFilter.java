@@ -29,43 +29,51 @@ public class CustomAuthoritiesFilter implements WebFilter {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
         return ReactiveSecurityContextHolder.getContext()
-            .doOnNext(ctx -> {
+                .map(ctx -> {
                 if (ctx.getAuthentication() instanceof OAuth2AuthenticationToken auth) {
                     oAuth2Authentication(auth, ctx);
                 } else if (ctx.getAuthentication() instanceof JwtAuthenticationToken jwtAuth) {
                     jwtAuthentication(jwtAuth, ctx);
                 }
+                    return ctx;
             })
-            .then(chain.filter(exchange));
+                .flatMap(ctx ->
+                        chain.filter(exchange)
+                                .contextWrite(ReactiveSecurityContextHolder.withSecurityContext(Mono.just(ctx)))
+                )
+                .switchIfEmpty(chain.filter(exchange));
     }
 
     private void oAuth2Authentication(OAuth2AuthenticationToken auth, SecurityContext context) {
         OAuth2User principal = auth.getPrincipal();
-        Collection<?> groups = (Collection<?>) principal.getAttributes().get(GROUPS_ATTRIBUTE);
+        Object groupsObj = principal.getAttributes().get(GROUPS_ATTRIBUTE);
 
-        List<String> groupNames = groups.stream()
-            .filter(Objects::nonNull)
-            .map(Object::toString)
-            .toList();
+        if (groupsObj instanceof Collection<?> groups) {
+            List<String> groupNames = groups.stream()
+                .filter(Objects::nonNull)
+                .map(Object::toString)
+                .toList();
 
-        List<GrantedAuthority> newAuthorities = mapGroupsToAuthorities(groupNames, auth.getAuthorities());
+            List<GrantedAuthority> newAuthorities = mapGroupsToAuthorities(groupNames, auth.getAuthorities());
 
-        context.setAuthentication(new OAuth2AuthenticationToken(principal, newAuthorities, auth.getAuthorizedClientRegistrationId()));
+            context.setAuthentication(new OAuth2AuthenticationToken(principal, newAuthorities, auth.getAuthorizedClientRegistrationId()));
+        }
     }
 
     private void jwtAuthentication(JwtAuthenticationToken jwtAuth, SecurityContext context) {
         Jwt jwt = jwtAuth.getToken();
-        Collection<String> groups = jwt.getClaimAsStringList(GROUPS_ATTRIBUTE);
+        List<String> groups = jwt.getClaimAsStringList(GROUPS_ATTRIBUTE);
 
-        List<GrantedAuthority> newAuthorities = mapGroupsToAuthorities(groups, jwtAuth.getAuthorities());
-
-        context.setAuthentication(new JwtAuthenticationToken(jwt, newAuthorities, jwt.getSubject()));
+        if (groups != null) {
+            List<GrantedAuthority> newAuthorities = mapGroupsToAuthorities(groups, jwtAuth.getAuthorities());
+            context.setAuthentication(new JwtAuthenticationToken(jwt, newAuthorities, jwt.getSubject()));
+        }
     }
 
     private List<GrantedAuthority> mapGroupsToAuthorities(Collection<String> groups, Collection<GrantedAuthority> existingAuthorities) {
         return groups.stream()
             .map(String::toUpperCase)
-            .map(CustomAuthoritiesFilter::apply)
+            .map(CustomAuthoritiesFilter::parseRole)
             .filter(Objects::nonNull)
             .map(role -> new SimpleGrantedAuthority(role.name()))
             .collect(Collectors.collectingAndThen(
@@ -74,7 +82,7 @@ public class CustomAuthoritiesFilter implements WebFilter {
             ));
     }
 
-    private static Role apply(String name) {
+    private static Role parseRole(String name) {
         try {
             return Role.valueOf(name);
         } catch (IllegalArgumentException e) {

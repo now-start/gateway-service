@@ -2,7 +2,6 @@ package org.nowstart.gateway.data;
 
 import java.util.ArrayList;
 import java.util.List;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
@@ -20,15 +19,21 @@ public class AuthorizeExchangeProperties {
 
         // 권한 상속: administrators는 모든 권한 포함, personal은 guest 포함
         if (administrators != null) {
-            administrators.forEach(path -> rules.add(new PathRule(path, List.of(Role.ADMINISTRATORS))));
+            administrators.forEach(path ->
+                    rules.add(new PathRule(path, Role.ADMINISTRATORS.getAllIncluded()))
+            );
         }
 
         if (personal != null) {
-            personal.forEach(path -> rules.add(new PathRule(path, List.of(Role.PERSONAL, Role.ADMINISTRATORS))));
+            personal.forEach(path ->
+                    rules.add(new PathRule(path, Role.PERSONAL.getAllIncluded()))
+            );
         }
 
         if (guest != null) {
-            guest.forEach(path -> rules.add(new PathRule(path, List.of(Role.GUEST, Role.PERSONAL, Role.ADMINISTRATORS))));
+            guest.forEach(path ->
+                    rules.add(new PathRule(path, Role.GUEST.getAllIncluded()))
+            );
         }
 
         if (publicPaths != null) {
@@ -38,10 +43,6 @@ public class AuthorizeExchangeProperties {
         return rules;
     }
 
-    @Data
-    @AllArgsConstructor
-    public static class PathRule {
-        private String path;
-        private List<Role> roles;
+    public record PathRule(String path, List<Role> roles) {
     }
 }
