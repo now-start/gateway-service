@@ -34,7 +34,7 @@ public class SecurityConfig {
                 .addFilterAfter(customAuthoritiesFilter, SecurityWebFiltersOrder.AUTHENTICATION)
                 .headers(headers -> headers
                         .frameOptions(ServerHttpSecurity.HeaderSpec.FrameOptionsSpec::disable)
-                        .contentSecurityPolicy(csp -> csp.policyDirectives("frame-ancestors 'self'"))
+                        .contentSecurityPolicy(csp -> csp.policyDirectives("upgrade-insecure-requests; frame-ancestors 'self'"))
                 )
                 .authorizeExchange(this::configureAuthorization)
                 .oauth2Login(Customizer.withDefaults())
