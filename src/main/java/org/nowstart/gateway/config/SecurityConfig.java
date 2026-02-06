@@ -14,8 +14,9 @@ import org.springframework.security.config.annotation.web.reactive.EnableWebFlux
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
-import org.springframework.util.AntPathMatcher;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.util.pattern.PathPattern;
+import org.springframework.web.util.pattern.PathPatternParser;
 
 @Configuration
 @RefreshScope
@@ -25,7 +26,7 @@ public class SecurityConfig {
 
     private final AuthorizeExchangeProperties authorizeProperties;
     private final CustomAuthoritiesFilter customAuthoritiesFilter;
-    private final AntPathMatcher pathMatcher = new AntPathMatcher();
+    private final PathPatternParser pathPatternParser = new PathPatternParser();
 
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
@@ -44,7 +45,11 @@ public class SecurityConfig {
 
     private void configureAuthorization(ServerHttpSecurity.AuthorizeExchangeSpec exchanges) {
         List<AuthorizeExchangeProperties.PathRule> sortedRules = authorizeProperties.getRules().stream()
-                .sorted((r1, r2) -> pathMatcher.getPatternComparator(r1.path()).compare(r1.path(), r2.path()))
+                .sorted((r1, r2) -> {
+                    PathPattern p1 = pathPatternParser.parse(r1.path());
+                    PathPattern p2 = pathPatternParser.parse(r2.path());
+                    return PathPattern.SPECIFICITY_COMPARATOR.compare(p1, p2);
+                })
                 .toList();
 
         for (AuthorizeExchangeProperties.PathRule rule : sortedRules) {
