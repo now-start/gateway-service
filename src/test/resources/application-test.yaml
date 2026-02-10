@@ -35,7 +35,14 @@ eureka:
     enabled: false
 
 security:
-  administrators:
-    - "/config/**"
+  users:
+    - "/*/v3/api-docs"
+    - "/admin/applications"
+    - "/admin/wallboard"
+    - "/admin/journal"
+    - "/admin/external"
   publicPaths:
     - "/config/actuator/busrefresh"
+    - "/*/actuator/**"
+    - "/actuator/**"
+    - "/nyang-nyang-bot/**"

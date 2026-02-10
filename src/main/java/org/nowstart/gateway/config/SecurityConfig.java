@@ -63,7 +63,7 @@ public class SecurityConfig {
             }
         }
 
-        exchanges.anyExchange().authenticated();
+        exchanges.anyExchange().hasAuthority(Role.ADMINISTRATORS.name());
     }
 
 }

@@ -1,9 +1,11 @@
 package org.nowstart.gateway.config;
 
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.nowstart.gateway.data.Role;
 import org.springframework.security.core.GrantedAuthority;
@@ -47,39 +49,44 @@ public class CustomAuthoritiesFilter implements WebFilter {
     private void oAuth2Authentication(OAuth2AuthenticationToken auth, SecurityContext context) {
         OAuth2User principal = auth.getPrincipal();
         Object groupsObj = principal.getAttributes().get(GROUPS_ATTRIBUTE);
+        Collection<String> groupNames = null;
 
         if (groupsObj instanceof Collection<?> groups) {
-            List<String> groupNames = groups.stream()
-                .filter(Objects::nonNull)
-                .map(Object::toString)
-                .toList();
-
-            List<GrantedAuthority> newAuthorities = mapGroupsToAuthorities(groupNames, auth.getAuthorities());
-
-            context.setAuthentication(new OAuth2AuthenticationToken(principal, newAuthorities, auth.getAuthorizedClientRegistrationId()));
+            groupNames = groups.stream()
+                    .filter(Objects::nonNull)
+                    .map(Object::toString)
+                    .toList();
         }
+
+        List<GrantedAuthority> newAuthorities = mapGroupsToAuthorities(groupNames, auth.getAuthorities());
+        context.setAuthentication(new OAuth2AuthenticationToken(principal, newAuthorities, auth.getAuthorizedClientRegistrationId()));
     }
 
     private void jwtAuthentication(JwtAuthenticationToken jwtAuth, SecurityContext context) {
         Jwt jwt = jwtAuth.getToken();
         List<String> groups = jwt.getClaimAsStringList(GROUPS_ATTRIBUTE);
 
-        if (groups != null) {
-            List<GrantedAuthority> newAuthorities = mapGroupsToAuthorities(groups, jwtAuth.getAuthorities());
-            context.setAuthentication(new JwtAuthenticationToken(jwt, newAuthorities, jwt.getSubject()));
-        }
+        List<GrantedAuthority> newAuthorities = mapGroupsToAuthorities(groups, jwtAuth.getAuthorities());
+        context.setAuthentication(new JwtAuthenticationToken(jwt, newAuthorities, jwt.getSubject()));
     }
 
     private List<GrantedAuthority> mapGroupsToAuthorities(Collection<String> groups, Collection<GrantedAuthority> existingAuthorities) {
-        return groups.stream()
-            .map(String::toUpperCase)
-            .map(CustomAuthoritiesFilter::parseRole)
-            .filter(Objects::nonNull)
-            .map(role -> new SimpleGrantedAuthority(role.name()))
-            .collect(Collectors.collectingAndThen(
-                Collectors.toCollection(() -> new java.util.ArrayList<>(existingAuthorities)),
-                List::copyOf
-            ));
+        Map<String, GrantedAuthority> byName = new LinkedHashMap<>();
+        for (GrantedAuthority authority : existingAuthorities) {
+            byName.put(authority.getAuthority(), authority);
+        }
+        byName.putIfAbsent(Role.USERS.name(), new SimpleGrantedAuthority(Role.USERS.name()));
+
+        if (groups != null) {
+            groups.stream()
+                    .map(group -> group.toUpperCase(Locale.ROOT))
+                    .map(CustomAuthoritiesFilter::parseRole)
+                    .filter(Objects::nonNull)
+                    .map(role -> new SimpleGrantedAuthority(role.name()))
+                    .forEach(authority -> byName.putIfAbsent(authority.getAuthority(), authority));
+        }
+
+        return List.copyOf(byName.values());
     }
 
     private static Role parseRole(String name) {

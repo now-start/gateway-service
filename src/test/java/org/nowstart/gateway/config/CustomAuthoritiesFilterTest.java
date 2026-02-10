@@ -91,7 +91,7 @@ class CustomAuthoritiesFilterTest {
             var authorities = whenFilterExecuted(context);
 
             // then
-            then(authorities).contains("ADMINISTRATORS");
+            then(authorities).contains("ADMINISTRATORS", "USERS");
         }
 
         @Test
@@ -108,7 +108,7 @@ class CustomAuthoritiesFilterTest {
             var authorities = whenFilterExecuted(context);
 
             // then
-            then(authorities).contains("ADMINISTRATORS", "PERSONAL");
+            then(authorities).contains("ADMINISTRATORS", "USERS");
         }
 
         @Test
@@ -117,7 +117,7 @@ class CustomAuthoritiesFilterTest {
             // given
             Map<String, Object> attributes = Map.of(
                     "sub", "user123",
-                    "groups", List.of("guest")
+                    "groups", List.of("users")
             );
             var context = givenSecurityContext(givenOAuth2Token(attributes, List.of()));
 
@@ -125,7 +125,7 @@ class CustomAuthoritiesFilterTest {
             var authorities = whenFilterExecuted(context);
 
             // then
-            then(authorities).contains("GUEST");
+            then(authorities).containsExactly("USERS");
         }
 
         @Test
@@ -142,7 +142,7 @@ class CustomAuthoritiesFilterTest {
             var authorities = whenFilterExecuted(context);
 
             // then
-            then(authorities).containsExactly("GUEST");
+            then(authorities).containsExactly("USERS");
         }
     }
 
@@ -164,7 +164,7 @@ class CustomAuthoritiesFilterTest {
             var authorities = whenFilterExecuted(context);
 
             // then
-            then(authorities).containsExactly("EXISTING");
+            then(authorities).containsExactlyInAnyOrder("EXISTING", "USERS");
         }
 
         @Test
@@ -179,7 +179,7 @@ class CustomAuthoritiesFilterTest {
             var authorities = whenFilterExecuted(context);
 
             // then
-            then(authorities).containsExactly("EXISTING");
+            then(authorities).containsExactlyInAnyOrder("EXISTING", "USERS");
         }
     }
 
@@ -200,21 +200,21 @@ class CustomAuthoritiesFilterTest {
             var authorities = whenFilterExecuted(context);
 
             // then
-            then(authorities).contains("ADMINISTRATORS");
+            then(authorities).contains("ADMINISTRATORS", "USERS");
         }
 
         @Test
         @DisplayName("소문자 groups claim이면 대문자로 변환하여 매핑된다")
         void thenLowercaseGroupsShouldBeConvertedToUppercase() {
             // given
-            var jwt = givenJwt(Map.of("groups", List.of("personal", "guest")));
+            var jwt = givenJwt(Map.of("groups", List.of("users")));
             var context = givenSecurityContext(new JwtAuthenticationToken(jwt, List.of(), jwt.getSubject()));
 
             // when
             var authorities = whenFilterExecuted(context);
 
             // then
-            then(authorities).containsExactlyInAnyOrder("PERSONAL", "GUEST");
+            then(authorities).containsExactly("USERS");
         }
 
         @Test
@@ -228,7 +228,7 @@ class CustomAuthoritiesFilterTest {
             var authorities = whenFilterExecuted(context);
 
             // then
-            then(authorities).containsExactly("ADMINISTRATORS");
+            then(authorities).containsExactlyInAnyOrder("ADMINISTRATORS", "USERS");
         }
     }
 
@@ -248,7 +248,7 @@ class CustomAuthoritiesFilterTest {
             var authorities = whenFilterExecuted(context);
 
             // then
-            then(authorities).containsExactly("EXISTING");
+            then(authorities).containsExactlyInAnyOrder("EXISTING", "USERS");
         }
     }
 

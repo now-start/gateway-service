@@ -5,9 +5,8 @@ import java.util.List;
 import java.util.stream.Stream;
 
 public enum Role {
-    GUEST,
-    PERSONAL(GUEST),
-    ADMINISTRATORS(PERSONAL, GUEST);
+    USERS,
+    ADMINISTRATORS;
 
     private final List<Role> includes;
 
