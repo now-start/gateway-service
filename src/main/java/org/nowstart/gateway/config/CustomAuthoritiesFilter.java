@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.nowstart.gateway.data.Role;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -24,6 +25,7 @@ import reactor.core.publisher.Mono;
 
 @Slf4j
 @Component
+@RefreshScope
 public class CustomAuthoritiesFilter implements WebFilter {
 
     private static final String GROUPS_ATTRIBUTE = "groups";

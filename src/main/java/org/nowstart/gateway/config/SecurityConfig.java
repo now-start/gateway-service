@@ -18,8 +18,8 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.web.util.pattern.PathPattern;
 import org.springframework.web.util.pattern.PathPatternParser;
 
-@Configuration
 @RefreshScope
+@Configuration
 @EnableWebFluxSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
