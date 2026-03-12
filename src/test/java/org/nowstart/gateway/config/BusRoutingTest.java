@@ -1,35 +1,30 @@
 package org.nowstart.gateway.config;
 
-import static org.assertj.core.api.BDDAssertions.then;
-import static org.mockito.BDDMockito.given;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.nowstart.gateway.data.AuthorizeExchangeProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.boot.actuate.web.exchanges.HttpExchangeRepository;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
-import org.springframework.boot.autoconfigure.security.reactive.ReactiveSecurityAutoConfiguration;
-import org.springframework.boot.autoconfigure.web.reactive.WebFluxAutoConfiguration;
+import org.springframework.boot.security.autoconfigure.web.reactive.ReactiveWebSecurityAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.webflux.autoconfigure.WebFluxAutoConfiguration;
 import org.springframework.cloud.gateway.event.RefreshRoutesEvent;
 import org.springframework.cloud.gateway.route.RouteLocator;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.annotation.Bean;
 import org.springframework.security.oauth2.client.registration.ReactiveClientRegistrationRepository;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-
 import reactor.test.StepVerifier;
+
+import static org.assertj.core.api.BDDAssertions.then;
 
 @ActiveProfiles("test")
 @SpringBootTest
 @ImportAutoConfiguration({
-        ReactiveSecurityAutoConfiguration.class,
+        ReactiveWebSecurityAutoConfiguration.class,
         WebFluxAutoConfiguration.class
 })
 class BusRoutingTest {
@@ -57,7 +52,7 @@ class BusRoutingTest {
         // then: 이벤트가 에러 없이 처리됨을 확인 (비동기 처리가 많으므로 사이드 이펙트 위주로 확인)
         // Spring Cloud Gateway는 RefreshRoutesEvent를 받으면 RouteRefreshListener를 통해
         // CachingRouteLocator를 갱신합니다.
-        
+
         then(routeLocator).isNotNull();
         StepVerifier.create(routeLocator.getRoutes())
                 .expectNextCount(0) // 테스트 프로필에서 discovery.enabled=false 이므로 0개 예상
