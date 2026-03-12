@@ -6,9 +6,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.nowstart.gateway.data.Role;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
+import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -31,26 +35,41 @@ public class CustomAuthoritiesFilter implements WebFilter {
     private static final String GROUPS_ATTRIBUTE = "groups";
 
     @Override
-    public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
+    public @NonNull Mono<Void> filter(@NonNull ServerWebExchange exchange, @NonNull WebFilterChain chain) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(ctx -> {
-                if (ctx.getAuthentication() instanceof OAuth2AuthenticationToken auth) {
-                    oAuth2Authentication(auth, ctx);
-                } else if (ctx.getAuthentication() instanceof JwtAuthenticationToken jwtAuth) {
-                    jwtAuthentication(jwtAuth, ctx);
-                }
+                    Authentication authentication = ctx.getAuthentication();
+                    if (authentication == null) {
+                        return ctx;
+                    }
+
+                    ServerHttpRequest request = exchange.getRequest();
+                    log.info("[{}] SecurityContext found method={} path={} authType={} principal={} authorities={}",
+                            request.getId(),
+                            request.getMethod(),
+                            request.getPath(),
+                            authentication.getClass().getSimpleName(),
+                            authentication.getName(),
+                            authentication.getAuthorities().stream()
+                                    .map(GrantedAuthority::getAuthority)
+                                    .toList());
+
+                    if (authentication instanceof OAuth2AuthenticationToken auth) {
+                        oAuth2Authentication(auth, ctx);
+                    } else if (authentication instanceof JwtAuthenticationToken jwtAuth) {
+                        jwtAuthentication(jwtAuth, ctx);
+                    }
                     return ctx;
-            })
-                .flatMap(ctx ->
-                        chain.filter(exchange)
-                                .contextWrite(ReactiveSecurityContextHolder.withSecurityContext(Mono.just(ctx)))
-                )
-                .switchIfEmpty(chain.filter(exchange));
+                })
+                .map(ctx -> chain.filter(exchange)
+                        .contextWrite(ReactiveSecurityContextHolder.withSecurityContext(Mono.just(ctx))))
+                .switchIfEmpty(Mono.fromSupplier(() -> chain.filter(exchange)))
+                .flatMap(Function.identity());
     }
 
     private void oAuth2Authentication(OAuth2AuthenticationToken auth, SecurityContext context) {
         OAuth2User principal = auth.getPrincipal();
-        Object groupsObj = principal.getAttributes().get(GROUPS_ATTRIBUTE);
+        Object groupsObj = Objects.requireNonNull(principal).getAttributes().get(GROUPS_ATTRIBUTE);
         Collection<String> groupNames = null;
 
         if (groupsObj instanceof Collection<?> groups) {

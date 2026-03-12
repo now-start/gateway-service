@@ -3,16 +3,22 @@ package org.nowstart.gateway.config;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
 import java.time.Instant;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.mock.http.server.reactive.MockServerHttpRequest;
+import org.springframework.mock.web.server.MockServerWebExchange;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -35,7 +41,7 @@ class CustomAuthoritiesFilterTest {
     // ─── 공통 헬퍼 ───────────────────────────────────────────────────────────
 
     private Set<String> whenFilterExecuted(SecurityContext context) {
-        var exchange = mock(ServerWebExchange.class);
+        var exchange = givenExchange();
         var chain = mock(WebFilterChain.class);
         given(chain.filter(exchange)).willReturn(Mono.empty());
 
@@ -43,14 +49,18 @@ class CustomAuthoritiesFilterTest {
                 .contextWrite(ReactiveSecurityContextHolder.withSecurityContext(Mono.just(context)))
                 .block();
 
-        return context.getAuthentication().getAuthorities().stream()
+        return Objects.requireNonNull(context.getAuthentication()).getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toSet());
     }
 
+    private ServerWebExchange givenExchange() {
+        return MockServerWebExchange.from(MockServerHttpRequest.get("/test").build());
+    }
+
     private OAuth2AuthenticationToken givenOAuth2Token(Map<String, Object> attributes, Collection<? extends GrantedAuthority> authorities) {
         var oauth2User = new DefaultOAuth2User(authorities, attributes, attributes.containsKey("sub") ? "sub" : attributes.keySet().iterator().next());
-        return new OAuth2AuthenticationToken(oauth2User, (Collection<GrantedAuthority>) authorities, "nowstart");
+        return new OAuth2AuthenticationToken(oauth2User, authorities, "nowstart");
     }
 
     private Jwt givenJwt(Map<String, Object> claims) {
@@ -262,13 +272,55 @@ class CustomAuthoritiesFilterTest {
         @DisplayName("체인이 정상적으로 진행된다")
         void thenFilterChainShouldContinueNormally() {
             // given
-            var exchange = mock(ServerWebExchange.class);
+            var exchange = givenExchange();
             var chain = mock(WebFilterChain.class);
             given(chain.filter(exchange)).willReturn(Mono.empty());
 
             // when & then
             StepVerifier.create(filter.filter(exchange, chain))
                     .verifyComplete();
+        }
+    }
+
+    @Nested
+    @DisplayName("SecurityContext가 존재할 때")
+    class WhenSecurityContextExists {
+
+        @Test
+        @DisplayName("하위 WebFilterChain은 한 번만 호출되어야 한다")
+        void thenFilterChainShouldOnlyBeInvokedOnce() {
+            // given
+            var jwt = givenJwt(Map.of("groups", List.of("administrators")));
+            var context = givenSecurityContext(new JwtAuthenticationToken(jwt, List.of(), jwt.getSubject()));
+            var exchange = givenExchange();
+            var chain = mock(WebFilterChain.class);
+            given(chain.filter(exchange)).willReturn(Mono.empty());
+
+            // when & then
+            StepVerifier.create(
+                    filter.filter(exchange, chain)
+                            .contextWrite(ReactiveSecurityContextHolder.withSecurityContext(Mono.just(context)))
+            ).verifyComplete();
+
+            verify(chain, times(1)).filter(exchange);
+        }
+
+        @Test
+        @DisplayName("Authentication이 null이어도 예외 없이 하위 체인을 진행해야 한다")
+        void thenFilterChainShouldContinueWhenAuthenticationIsNull() {
+            // given
+            var context = givenSecurityContext(null);
+            var exchange = givenExchange();
+            var chain = mock(WebFilterChain.class);
+            given(chain.filter(exchange)).willReturn(Mono.empty());
+
+            // when & then
+            StepVerifier.create(
+                    filter.filter(exchange, chain)
+                            .contextWrite(ReactiveSecurityContextHolder.withSecurityContext(Mono.just(context)))
+            ).verifyComplete();
+
+            verify(chain, times(1)).filter(exchange);
         }
     }
 
@@ -281,7 +333,7 @@ class CustomAuthoritiesFilterTest {
         void thenFilterChainShouldContinueWithoutException() {
             // given
             var unsupportedAuth = mock(Authentication.class);
-            var exchange = mock(ServerWebExchange.class);
+            var exchange = givenExchange();
             var chain = mock(WebFilterChain.class);
 
             given(unsupportedAuth.getAuthorities()).willReturn(List.of());

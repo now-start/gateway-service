@@ -76,6 +76,24 @@ class SecurityConfigTest {
                 .expectStatus().isUnauthorized();
     }
 
+    @Test
+    @DisplayName("CORS가 비활성화되면 preflight 요청에도 CORS 허용 헤더가 추가되지 않는다")
+    void corsPreflightRequestShouldNotIncludeCorsHeadersWhenDisabled() {
+        // given
+        String path = "/config/other";
+        String origin = "https://frontend.example.com";
+
+        // when & then
+        webTestClient.options()
+                .uri(path)
+                .header("Origin", origin)
+                .header("Access-Control-Request-Method", "GET")
+                .header("Access-Control-Request-Headers", "Authorization")
+                .exchange()
+                .expectStatus().isUnauthorized()
+                .expectHeader().doesNotExist("Access-Control-Allow-Origin");
+    }
+
     @TestConfiguration
     static class TestConfig {
         @Bean

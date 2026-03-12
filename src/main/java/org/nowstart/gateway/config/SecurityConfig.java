@@ -1,7 +1,5 @@
 package org.nowstart.gateway.config;
 
-
-import java.util.Comparator;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.nowstart.gateway.data.AuthorizeExchangeProperties;
@@ -32,6 +30,7 @@ public class SecurityConfig {
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
+                .cors(ServerHttpSecurity.CorsSpec::disable)
                 .addFilterAfter(customAuthoritiesFilter, SecurityWebFiltersOrder.AUTHENTICATION)
                 .headers(headers -> headers
                         .frameOptions(ServerHttpSecurity.HeaderSpec.FrameOptionsSpec::disable)
