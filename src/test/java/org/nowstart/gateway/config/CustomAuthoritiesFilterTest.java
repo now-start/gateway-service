@@ -101,7 +101,7 @@ class CustomAuthoritiesFilterTest {
             var authorities = whenFilterExecuted(context);
 
             // then
-            then(authorities).contains("ADMINISTRATORS", "USERS");
+            then(authorities).contains("ROLE_ADMINISTRATORS", "ROLE_USERS");
         }
 
         @Test
@@ -118,7 +118,7 @@ class CustomAuthoritiesFilterTest {
             var authorities = whenFilterExecuted(context);
 
             // then
-            then(authorities).contains("ADMINISTRATORS", "USERS");
+            then(authorities).contains("ROLE_ADMINISTRATORS", "ROLE_USERS");
         }
 
         @Test
@@ -135,7 +135,7 @@ class CustomAuthoritiesFilterTest {
             var authorities = whenFilterExecuted(context);
 
             // then
-            then(authorities).containsExactly("USERS");
+            then(authorities).containsExactly("ROLE_USERS");
         }
 
         @Test
@@ -152,7 +152,7 @@ class CustomAuthoritiesFilterTest {
             var authorities = whenFilterExecuted(context);
 
             // then
-            then(authorities).containsExactly("USERS");
+            then(authorities).containsExactly("ROLE_USERS");
         }
     }
 
@@ -174,7 +174,7 @@ class CustomAuthoritiesFilterTest {
             var authorities = whenFilterExecuted(context);
 
             // then
-            then(authorities).containsExactlyInAnyOrder("EXISTING", "USERS");
+            then(authorities).containsExactlyInAnyOrder("EXISTING", "ROLE_USERS");
         }
 
         @Test
@@ -189,7 +189,7 @@ class CustomAuthoritiesFilterTest {
             var authorities = whenFilterExecuted(context);
 
             // then
-            then(authorities).containsExactlyInAnyOrder("EXISTING", "USERS");
+            then(authorities).containsExactlyInAnyOrder("EXISTING", "ROLE_USERS");
         }
     }
 
@@ -210,7 +210,7 @@ class CustomAuthoritiesFilterTest {
             var authorities = whenFilterExecuted(context);
 
             // then
-            then(authorities).contains("ADMINISTRATORS", "USERS");
+            then(authorities).contains("ROLE_ADMINISTRATORS", "ROLE_USERS");
         }
 
         @Test
@@ -224,7 +224,7 @@ class CustomAuthoritiesFilterTest {
             var authorities = whenFilterExecuted(context);
 
             // then
-            then(authorities).containsExactly("USERS");
+            then(authorities).containsExactly("ROLE_USERS");
         }
 
         @Test
@@ -238,7 +238,7 @@ class CustomAuthoritiesFilterTest {
             var authorities = whenFilterExecuted(context);
 
             // then
-            then(authorities).containsExactlyInAnyOrder("ADMINISTRATORS", "USERS");
+            then(authorities).containsExactlyInAnyOrder("ROLE_ADMINISTRATORS", "ROLE_USERS");
         }
     }
 
@@ -258,7 +258,7 @@ class CustomAuthoritiesFilterTest {
             var authorities = whenFilterExecuted(context);
 
             // then
-            then(authorities).containsExactlyInAnyOrder("EXISTING", "USERS");
+            then(authorities).containsExactlyInAnyOrder("EXISTING", "ROLE_USERS");
         }
     }
 

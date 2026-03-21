@@ -1,6 +1,8 @@
 package org.nowstart.gateway.data;
 
 import static org.assertj.core.api.BDDAssertions.then;
+
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -13,7 +15,7 @@ class RoleTest {
 
         @Test
         @DisplayName("contains only itself")
-        void thenShouldContainOnlyItself() {
+        void thenShouldContainItselfAndUsers() {
             // given
             var role = Role.USERS;
 
@@ -40,7 +42,47 @@ class RoleTest {
 
             // then
             then(included)
-                    .containsExactly(Role.ADMINISTRATORS);
+                    .containsExactly(Role.ADMINISTRATORS, Role.USERS);
+        }
+    }
+
+    @Nested
+    @DisplayName("role authority")
+    class WhenResolvingAuthority {
+
+        @Test
+        @DisplayName("adds ROLE_ prefix")
+        void thenShouldAddRolePrefix() {
+            then(Role.ADMINISTRATORS.authority()).isEqualTo("ROLE_ADMINISTRATORS");
+        }
+    }
+
+    @Nested
+    @DisplayName("role parsing")
+    class WhenParsingRole {
+
+        @Test
+        @DisplayName("matches case-insensitively")
+        void thenShouldParseIgnoringCase() {
+            then(Role.from("administrators")).isEqualTo(Role.ADMINISTRATORS);
+        }
+
+        @Test
+        @DisplayName("returns null for unknown values")
+        void thenShouldReturnNullForUnknownValues() {
+            then(Role.from("guest")).isNull();
+        }
+    }
+
+    @Nested
+    @DisplayName("accepted role names")
+    class WhenResolvingAcceptedRoleNames {
+
+        @Test
+        @DisplayName("users routes also accept administrators")
+        void thenUsersRoutesShouldAlsoAcceptAdministrators() {
+            then(Role.acceptedNames(List.of(Role.USERS)))
+                    .containsExactly(Role.USERS.name(), Role.ADMINISTRATORS.name());
         }
     }
 

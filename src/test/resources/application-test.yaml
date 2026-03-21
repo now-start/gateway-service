@@ -1,5 +1,7 @@
 spring:
   cloud:
+    decrypt-environment-post-processor:
+      enabled: false
     discovery:
       enabled: false
     gateway:
@@ -13,6 +15,11 @@ spring:
     bus:
       enabled: false
   security:
+    user:
+      name: "basic-user"
+      password: "{noop}basic-secret"
+      roles:
+        - "ADMINISTRATORS"
     oauth2:
       client:
         registration:
@@ -28,7 +35,7 @@ spring:
             jwk-set-uri: "http://localhost:9999/oauth/jwks"
       resourceserver:
         jwt:
-          jwk-set-uri: "http://localhost:9999/oauth/jwks"
+          issuer-uri: "http://localhost:9999"
 
 eureka:
   client:
